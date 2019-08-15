@@ -92,6 +92,7 @@ func main() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
+	// Todo add gravefull shutdown of engine process after command from gui is received
 	// Kill it:
 	if err := cmd.Process.Kill(); err != nil {
 		log.Fatal("failed to kill process: ", err)
