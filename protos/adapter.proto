@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+service Adapter {
+  //
+  rpc ExecuteEngineCommand(Request) returns (Response) {}
+}
+
+message Request {
+  string text = 1;
+}
+
+// Todo potentially add more features/info here
+message Response {
+  string text = 1;
+}
+
+// generate python: py -3 -m grpc_tools.protoc -I. --python_out=./protos --grpc_python_out=./protos/protos protos/adapter.proto
+// generate go: protoc3 --go_out=plugins=grpc:protos protos/adapter.proto

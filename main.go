@@ -2,13 +2,36 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"time"
+
+	pb "./protos"
+	"google.golang.org/grpc"
 )
+
+const (
+	port = ":50051"
+)
+
+// server is used to implement AdapterServer.
+type adapterServer struct {
+	stdin io.Writer
+	ch    chan string
+}
+
+// ExecuteEngineCommand implements AdapterServer
+func (s *adapterServer) ExecuteEngineCommand(ctx context.Context, in *pb.Request) (*pb.Response, error) {
+	log.Printf("Received: %v", in.Text)
+	response := getEngineResponse(in.Text, s.stdin, s.ch)
+	log.Printf("Sending back: %v", response)
+	return &pb.Response{Text: response}, nil
+}
 
 func getInput(reader io.Reader, ch chan string) {
 	scanner := bufio.NewScanner(reader)
@@ -58,8 +81,16 @@ func main() {
 		log.Fatalf("Error starting program: %s, %s", cmd.Path, err.Error())
 	}
 
-	fmt.Println("---------------------------")
-	fmt.Println(getEngineResponse("uci\n", stdin, ch))
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	server := adapterServer{stdin: stdin, ch: ch}
+	pb.RegisterAdapterServer(s, &server)
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 
 	// Kill it:
 	if err := cmd.Process.Kill(); err != nil {
