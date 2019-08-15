@@ -7,6 +7,7 @@ service Adapter {
 
 message Request {
   string text = 1;
+  int32 timeout = 2;
 }
 
 // Todo potentially add more features/info here
@@ -14,5 +15,6 @@ message Response {
   string text = 1;
 }
 
-// generate python: py -3 -m grpc_tools.protoc -I. --python_out=./protos --grpc_python_out=./protos/protos protos/adapter.proto
-// generate go: protoc3 --go_out=plugins=grpc:protos protos/adapter.proto
+// generate python: py -3 -m grpc_tools.protoc -I./protos --python_out=./protos --grpc_python_out=./protos ./protos/adapter.proto
+// generate go: protoc3 --go_out=plugins=grpc:. protos/adapter.proto
+// generated python3 files have a bug -> they need to use relative imports i.e. change 'import xxx_pb2 as ...' to 'from . import xxx_pb2...'

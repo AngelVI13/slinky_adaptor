@@ -28,7 +28,7 @@ type adapterServer struct {
 // ExecuteEngineCommand implements AdapterServer
 func (s *adapterServer) ExecuteEngineCommand(ctx context.Context, in *pb.Request) (*pb.Response, error) {
 	log.Printf("Received: %v", in.Text)
-	response := getEngineResponse(in.Text, s.stdin, s.ch)
+	response := getEngineResponse(in.Text, s.stdin, s.ch, in.Timeout)
 	log.Printf("Sending back: %v", response)
 	return &pb.Response{Text: response}, nil
 }
@@ -42,7 +42,7 @@ func getInput(reader io.Reader, ch chan string) {
 	}
 }
 
-func getEngineResponse(input string, stdin io.Writer, ch chan string) (output string) {
+func getEngineResponse(input string, stdin io.Writer, ch chan string, waitSeconds int32) (output string) {
 	if _, err := stdin.Write([]byte(input)); err != nil {
 		log.Fatalf("Error writing to stdin: %s", err.Error())
 	}
@@ -53,7 +53,7 @@ func getEngineResponse(input string, stdin io.Writer, ch chan string) (output st
 		case value := <-ch:
 			fmt.Printf("Got input. %s\n", value)
 			output += fmt.Sprintf("%s\n", value)
-		case <-time.After(1 * time.Second):
+		case <-time.After(time.Duration(waitSeconds) * time.Second):
 			fmt.Println("Timed out, exiting.")
 			stopped = true
 		}
