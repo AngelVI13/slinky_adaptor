@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,10 +14,6 @@ import (
 
 	pb "./protos"
 	"google.golang.org/grpc"
-)
-
-const (
-	port = ":50051"
 )
 
 // server is used to implement AdapterServer.
@@ -62,7 +59,17 @@ func getEngineResponse(input string, stdin io.Writer, ch chan string, waitSecond
 }
 
 func main() {
-	cmd := exec.Command("./slinky.exe")
+	engineStrPtr := flag.String("engine-path", "", "Path to engine executable")
+	commPortPtr := flag.Int("comm-port", 50051, "Communication port with adapter")
+
+	flag.Parse()
+
+	if *engineStrPtr == "" { // todo check for .exe in path etc
+		panic("Engine path not provided")
+	}
+	port := fmt.Sprintf(":%d", *commPortPtr)
+
+	cmd := exec.Command(*engineStrPtr)
 	cmd.Stderr = os.Stderr
 	stdin, err := cmd.StdinPipe()
 	if nil != err {
